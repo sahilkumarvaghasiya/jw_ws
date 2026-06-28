@@ -346,6 +346,31 @@ export const orders: Order[] = [
     progress: 10,
     urgency: "urgent",
   },
+  {
+    id: "o7",
+    orderNumber: "JW-2024-083",
+    title: "Silver Chain Bracelet",
+    description: "Sterling silver chain bracelet with custom clasp, 7 inch length.",
+    status: "approved",
+    customer: {
+      name: "James Cooper",
+      email: "j.cooper@email.com",
+      phone: "+1 (555) 890-1234",
+    },
+    seller: { id: "u1", name: "Eleanor Whitmore", email: "eleanor@luxejewels.com" },
+    manufacturer: { id: "u4", name: "Elena Rossi", email: "elena@manufacturing.com" },
+    requirements: "Sterling silver 925, 7 inch, lobster clasp, polished finish.",
+    referenceImages: [],
+    designFiles: sampleDesignFiles,
+    previewImages: samplePreviews,
+    comments: [],
+    activity: [],
+    createdAt: "2024-06-29T08:00:00Z",
+    updatedAt: "2024-06-29T09:00:00Z",
+    dueDate: "2024-07-25",
+    progress: 20,
+    urgency: "urgent",
+  },
 ];
 
 function resolveUploaderRole(order: Order, uploadedBy: string): UserRole {

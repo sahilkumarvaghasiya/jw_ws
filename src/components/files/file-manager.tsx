@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
 import { formatFileSize, formatDate, formatDateTime, cn } from "@/lib/utils";
 import {
   Download,
@@ -278,11 +278,14 @@ export function FileManager({ files }: FileManagerProps) {
   const [activeAction, setActiveAction] = useState<ReviewAction>("forward");
   const [forwardManufacturerId, setForwardManufacturerId] = useState("");
   const [forwardMessage, setForwardMessage] = useState("");
+  const [forwardPreferredDate, setForwardPreferredDate] = useState("");
   const [repairNotes, setRepairNotes] = useState<string[]>([""]);
   const [actionFeedback, setActionFeedback] = useState<"repair" | "forward" | null>(null);
   const [viewFileId, setViewFileId] = useState<string | null>(null);
 
   const isDesignerRole = role === "designer";
+  const isManufacturerRole = role === "manufacturer";
+  const isSellerOnlyTeamFilter = isDesignerRole || isManufacturerRole;
   const teamOptions = teamFilterMode === "designer" ? designers : manufacturers;
 
   const sellerOptions = useMemo(() => {
@@ -313,7 +316,7 @@ export function FileManager({ files }: FileManagerProps) {
       file.orderNumber.toLowerCase().includes(query) ||
       file.productTitle.toLowerCase().includes(query);
     const matchesType = fileMatchesTypeFilter(file, selectedTypes);
-    const matchesTeam = isDesignerRole
+    const matchesTeam = isSellerOnlyTeamFilter
       ? selectedSellerIds.length === 0 ||
         (file.sellerId && selectedSellerIds.includes(file.sellerId))
       : selectedTeamIds.length === 0 ||
@@ -337,7 +340,7 @@ export function FileManager({ files }: FileManagerProps) {
   const allSelectableSelected =
     selectableFiles.length > 0 && selectableFiles.every((f) => selectedFileIds.includes(f.id));
 
-  const activeFilterCount = isDesignerRole
+  const activeFilterCount = isSellerOnlyTeamFilter
     ? selectedTypes.length + selectedSellerIds.length
     : selectedTypes.length + selectedTeamIds.length + (teamFilterMode !== "designer" ? 1 : 0);
 
@@ -366,10 +369,12 @@ export function FileManager({ files }: FileManagerProps) {
       manufacturerName: manufacturer.name,
       sellerName: user.name,
       note: forwardMessage.trim() || undefined,
+      sellerPreferredDate: forwardPreferredDate || undefined,
     });
     setSelectedFileIds((prev) => prev.filter((id) => !filesToForward.some((f) => f.id === id)));
     setActionFeedback("forward");
     setForwardMessage("");
+    setForwardPreferredDate("");
   };
 
   const handleSendForRepair = (filesToRepair: ManagedFile[]) => {
@@ -445,7 +450,7 @@ export function FileManager({ files }: FileManagerProps) {
         </div>
       )}
 
-      {getRepairsForFile(file.id).find((r) => r.status === "pending") && !isDesignerRole && (
+      {getRepairsForFile(file.id).find((r) => r.status === "pending") && !isSellerOnlyTeamFilter && (
         <div className="p-3 rounded-xl bg-orange-500/5 border border-orange-500/20 text-xs space-y-1">
           <p className="font-medium text-orange-600 dark:text-orange-400 flex items-center gap-1">
             <AlertCircle className="w-3.5 h-3.5" />
@@ -459,7 +464,7 @@ export function FileManager({ files }: FileManagerProps) {
         </div>
       )}
 
-      {getForwardForFile(file.id) && !isDesignerRole && (
+      {getForwardForFile(file.id) && !isSellerOnlyTeamFilter && (
         <div className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/20 text-xs space-y-1">
           <p className="font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
             <Factory className="w-3.5 h-3.5" />
@@ -531,7 +536,7 @@ export function FileManager({ files }: FileManagerProps) {
                 </FilterChip>
               ))}
               <span className="w-px h-4 bg-border mx-1 hidden sm:block" />
-              {isDesignerRole ? (
+              {isSellerOnlyTeamFilter ? (
                 <PersonFilter
                   mode="seller"
                   options={sellerOptions}
@@ -673,7 +678,7 @@ export function FileManager({ files }: FileManagerProps) {
                           file={file}
                           getRepairsForFile={getRepairsForFile}
                           getForwardForFile={getForwardForFile}
-                          hideManufacturer={isDesignerRole}
+                          hideManufacturer={isSellerOnlyTeamFilter}
                         />
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
@@ -834,9 +839,15 @@ export function FileManager({ files }: FileManagerProps) {
                       <Textarea
                         rows={3}
                         label="Message"
-                        placeholder="Production instructions..."
+                        placeholder="Production instructions or request an earlier finish date..."
                         value={forwardMessage}
                         onChange={(e) => setForwardMessage(e.target.value)}
+                      />
+                      <Input
+                        type="date"
+                        label="Requested finish date (optional)"
+                        value={forwardPreferredDate}
+                        onChange={(e) => setForwardPreferredDate(e.target.value)}
                       />
                       <Button
                         type="button"

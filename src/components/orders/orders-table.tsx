@@ -2,15 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
-import { StatusBadge, DesignerStatusBadge } from "@/components/ui/badge";
+import { StatusBadge, DesignerStatusBadge, ManufacturerStatusBadge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate, getOrderDraftStep, orderStatusDescriptions } from "@/lib/utils";
-import type { Order, OrderStatus } from "@/lib/types";
+import type { Order, OrderStatus, ManufacturerWorkflowStatus } from "@/lib/types";
 import { designers, manufacturers } from "@/lib/mock-data";
 import { useFileRepairs } from "@/context/file-repair-context";
 import { useOrderWorkflow } from "@/context/order-workflow-context";
+import { useManufacturerWorkflow } from "@/context/manufacturer-workflow-context";
 import { ArrowUpDown, ChevronDown, Factory, Palette, Search, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -21,6 +22,8 @@ interface OrdersTableProps {
   showManufacturer?: boolean;
   showTeamFilter?: boolean;
   designerView?: boolean;
+  manufacturerView?: boolean;
+  sellerManufacturingView?: boolean;
   limit?: number;
   resumePendingOrders?: boolean;
 }
@@ -43,6 +46,15 @@ const designerStatusFilters: { label: string; value: DesignerStatusFilter }[] = 
   { label: "In design", value: "in_design" },
   { label: "Completed", value: "completed" },
   { label: "Repair", value: "repair" },
+];
+
+type ManufacturerStatusFilter = "all" | ManufacturerWorkflowStatus;
+
+const manufacturerStatusFilters: { label: string; value: ManufacturerStatusFilter }[] = [
+  { label: "All", value: "all" },
+  { label: "Pending", value: "pending" },
+  { label: "In production", value: "in_production" },
+  { label: "Ready to pick up", value: "ready_for_pickup" },
 ];
 
 interface TeamMemberOption {
@@ -214,16 +226,21 @@ export function OrdersTable({
   showManufacturer,
   showTeamFilter,
   designerView,
+  manufacturerView,
+  sellerManufacturingView,
   limit,
   resumePendingOrders,
 }: OrdersTableProps) {
   const router = useRouter();
   const { getPendingRepairsForDesigner } = useFileRepairs();
-  const { getStatus } = useOrderWorkflow();
+  const { getStatus: getDesignerStatus } = useOrderWorkflow();
+  const { getStatus: getManufacturerStatus, getState: getManufacturerState } = useManufacturerWorkflow();
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
   const [designerStatusFilter, setDesignerStatusFilter] = useState<DesignerStatusFilter>("all");
+  const [manufacturerStatusFilter, setManufacturerStatusFilter] =
+    useState<ManufacturerStatusFilter>("all");
   const [sortField, setSortField] = useState<"createdAt" | "orderNumber">("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [teamFilterMode, setTeamFilterMode] = useState<TeamFilterMode>("designer");
@@ -245,12 +262,15 @@ export function OrdersTable({
   }, [designerView, getPendingRepairsForDesigner]);
 
   const getDesignerOrderStatus = (order: Order) =>
-    getStatus(order.id, repairOrderIds.has(order.id), order.status);
+    getDesignerStatus(order.id, repairOrderIds.has(order.id), order.status);
+
+  const hasManufacturerTracking = (order: Order) =>
+    !!(sellerManufacturingView && getManufacturerState(order.id));
 
   const filtered = orders
     .filter((o) => {
       const query = search.toLowerCase();
-      const matchesSearch = designerView
+      const matchesSearch = designerView || manufacturerView
         ? !query ||
           o.title.toLowerCase().includes(query) ||
           o.orderNumber.toLowerCase().includes(query) ||
@@ -261,7 +281,13 @@ export function OrdersTable({
 
       const matchesStatus = designerView
         ? designerStatusFilter === "all" || getDesignerOrderStatus(o) === designerStatusFilter
-        : statusFilter === "all" || o.status === statusFilter;
+        : manufacturerView
+          ? manufacturerStatusFilter === "all" ||
+            getManufacturerStatus(o.id) === manufacturerStatusFilter
+          : sellerManufacturingView && manufacturerStatusFilter !== "all"
+            ? hasManufacturerTracking(o) &&
+              getManufacturerStatus(o.id) === manufacturerStatusFilter
+            : statusFilter === "all" || o.status === statusFilter;
 
       const matchesTeam =
         !showTeamFilter ||
@@ -293,10 +319,19 @@ export function OrdersTable({
   const showManufacturerColumn = !!showManufacturer;
 
   const activeFilterCount = designerView
-    ? (designerStatusFilter !== "all" ? 1 : 0)
-    : (statusFilter !== "all" ? 1 : 0) +
-      selectedTeamIds.length +
-      (showTeamFilter && teamFilterMode !== "designer" ? 1 : 0);
+    ? designerStatusFilter !== "all" ? 1 : 0
+    : manufacturerView || (sellerManufacturingView && manufacturerStatusFilter !== "all")
+      ? (manufacturerStatusFilter !== "all" ? 1 : 0)
+      : (statusFilter !== "all" ? 1 : 0) +
+        selectedTeamIds.length +
+        (showTeamFilter && teamFilterMode !== "designer" ? 1 : 0);
+
+  const roleView = designerView || manufacturerView;
+  const statusFilterOptions = designerView
+    ? designerStatusFilters
+    : manufacturerView || sellerManufacturingView
+      ? manufacturerStatusFilters
+      : statusFilters;
 
   return (
     <div className="space-y-4">
@@ -308,7 +343,7 @@ export function OrdersTable({
               <input
                 type="search"
                 placeholder={
-                  designerView
+                  roleView
                     ? "Search order ID, seller, or product..."
                     : "Search order ID, customer, or product..."
                 }
@@ -342,19 +377,25 @@ export function OrdersTable({
           {showFilters && (
             <div className="pt-3 border-t border-border flex flex-col gap-3 overflow-visible">
               <div className="flex flex-wrap gap-2">
-                {(designerView ? designerStatusFilters : statusFilters).map((f) => (
+                {statusFilterOptions.map((f) => (
                   <FilterChip
                     key={f.value}
                     active={
                       designerView
                         ? designerStatusFilter === f.value
-                        : statusFilter === f.value
+                        : manufacturerView || sellerManufacturingView
+                          ? manufacturerStatusFilter === f.value
+                          : statusFilter === f.value
                     }
-                    onClick={() =>
-                      designerView
-                        ? setDesignerStatusFilter(f.value as DesignerStatusFilter)
-                        : setStatusFilter(f.value as OrderStatus | "all")
-                    }
+                    onClick={() => {
+                      if (designerView) {
+                        setDesignerStatusFilter(f.value as DesignerStatusFilter);
+                      } else if (manufacturerView || sellerManufacturingView) {
+                        setManufacturerStatusFilter(f.value as ManufacturerStatusFilter);
+                      } else {
+                        setStatusFilter(f.value as OrderStatus | "all");
+                      }
+                    }}
                   >
                     {f.label}
                   </FilterChip>
@@ -431,7 +472,7 @@ export function OrdersTable({
                   </button>
                 </th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                  {designerView ? "Product" : "Customer"}
+                  {roleView ? "Product" : "Customer"}
                 </th>
                 {showSeller && <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Seller</th>}
                 {showDesignerColumn && (
@@ -441,7 +482,7 @@ export function OrdersTable({
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Manufacturer</th>
                 )}
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                {!designerView && (
+                {!roleView && (
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Progress</th>
                 )}
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">
@@ -471,7 +512,7 @@ export function OrdersTable({
                     </div>
                   </td>
                   <td className="px-4 py-4 text-muted-foreground">
-                    {designerView ? order.title : order.customer.name}
+                    {roleView ? order.title : order.customer.name}
                   </td>
                   {showSeller && <td className="px-4 py-4 text-muted-foreground hidden lg:table-cell">{order.seller.name}</td>}
                   {showDesignerColumn && (
@@ -483,11 +524,22 @@ export function OrdersTable({
                   <td className="px-4 py-4">
                     {designerView ? (
                       <DesignerStatusBadge status={getDesignerOrderStatus(order)} />
+                    ) : manufacturerView ? (
+                      <ManufacturerStatusBadge status={getManufacturerStatus(order.id)} />
+                    ) : hasManufacturerTracking(order) ? (
+                      <div className="space-y-1">
+                        <ManufacturerStatusBadge status={getManufacturerStatus(order.id)} />
+                        {getManufacturerState(order.id)?.manufacturingDeadline && (
+                          <p className="text-[10px] text-muted-foreground">
+                            Deadline: {formatDate(getManufacturerState(order.id)!.manufacturingDeadline!)}
+                          </p>
+                        )}
+                      </div>
                     ) : (
                       <StatusBadge status={order.status} />
                     )}
                   </td>
-                  {!designerView && (
+                  {!roleView && (
                     <td className="px-4 py-4 hidden md:table-cell w-32"><Progress value={order.progress} /></td>
                   )}
                   <td className="px-4 py-4 text-muted-foreground hidden sm:table-cell">{formatDate(order.createdAt)}</td>

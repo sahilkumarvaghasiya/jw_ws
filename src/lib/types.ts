@@ -150,9 +150,23 @@ export interface FileForwardPackage {
   id: string;
   fileIds: string[];
   files: ForwardedFile[];
+  orderId: string;
+  orderNumber: string;
   manufacturerId: string;
   manufacturerName: string;
   sellerName: string;
   note?: string;
+  /** Date seller asked manufacturer to aim for, if any */
+  sellerPreferredDate?: string;
   createdAt: string;
+}
+
+export type ManufacturerWorkflowStatus = "pending" | "in_production" | "ready_for_pickup";
+
+export interface ManufacturerOrderState {
+  orderId: string;
+  status: ManufacturerWorkflowStatus;
+  manufacturingDeadline?: string;
+  acceptedAt?: string;
+  readyAt?: string;
 }

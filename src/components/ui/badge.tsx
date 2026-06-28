@@ -2,6 +2,8 @@ import { cn, orderStatusDescriptions } from "@/lib/utils";
 import type { OrderStatus } from "@/lib/types";
 import type { DesignerWorkflowStatus } from "@/context/order-workflow-context";
 import { workflowStatusLabels } from "@/context/order-workflow-context";
+import type { ManufacturerWorkflowStatus } from "@/lib/types";
+import { manufacturerStatusLabels } from "@/context/manufacturer-workflow-context";
 
 const statusConfig: Record<OrderStatus, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-muted text-muted-foreground" },
@@ -59,6 +61,32 @@ export function DesignerStatusBadge({
       )}
     >
       {workflowStatusLabels[status]}
+    </span>
+  );
+}
+
+const manufacturerStatusConfig: Record<ManufacturerWorkflowStatus, string> = {
+  pending: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  in_production: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  ready_for_pickup: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+};
+
+export function ManufacturerStatusBadge({
+  status,
+  className,
+}: {
+  status: ManufacturerWorkflowStatus;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase",
+        manufacturerStatusConfig[status],
+        className
+      )}
+    >
+      {manufacturerStatusLabels[status]}
     </span>
   );
 }
