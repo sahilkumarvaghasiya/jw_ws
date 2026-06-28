@@ -1,12 +1,32 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Gem, Mail, Lock, ArrowRight } from "lucide-react";
+import { Input, Select } from "@/components/ui/input";
+import { useApp } from "@/context/app-context";
+import type { UserRole } from "@/lib/types";
+import { Gem, Mail, Lock, ArrowRight, UserCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
+const roleDashboard: Record<UserRole, string> = {
+  seller: "/dashboard/seller",
+  designer: "/dashboard/designer",
+  manufacturer: "/dashboard/manufacturer",
+};
+
 export default function LoginPage() {
+  const router = useRouter();
+  const { setRole } = useApp();
+  const [selectedRole, setSelectedRole] = useState<UserRole>("seller");
+
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRole(selectedRole);
+    router.push(roleDashboard[selectedRole]);
+  };
+
   return (
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 relative bg-dark overflow-hidden">
@@ -55,7 +75,7 @@ export default function LoginPage() {
             <h2 className="text-2xl font-medium mb-1">Welcome back</h2>
             <p className="text-muted-foreground mb-8">Sign in to your account to continue</p>
 
-            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-5" onSubmit={handleSignIn}>
               <div className="relative">
                 <Mail className="absolute left-3 top-[38px] w-4 h-4 text-muted-foreground" />
                 <Input
@@ -78,6 +98,21 @@ export default function LoginPage() {
                   defaultValue="password"
                 />
               </div>
+              <div className="relative">
+                <UserCircle className="absolute left-3 top-[38px] w-4 h-4 text-muted-foreground" />
+                <Select
+                  id="role"
+                  label="Role"
+                  className="pl-10 pr-10"
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value as UserRole)}
+                  options={[
+                    { value: "seller", label: "Seller" },
+                    { value: "designer", label: "Designer" },
+                    { value: "manufacturer", label: "Manufacturer" },
+                  ]}
+                />
+              </div>
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" className="rounded border-border text-gold focus:ring-gold" />
@@ -87,12 +122,10 @@ export default function LoginPage() {
                   Forgot password?
                 </Link>
               </div>
-              <Link href="/dashboard/seller">
-                <Button className="w-full" size="lg">
-                  Sign In
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
+              <Button type="submit" className="w-full" size="lg">
+                Sign In
+                <ArrowRight className="w-4 h-4" />
+              </Button>
             </form>
 
             <p className="text-center text-sm text-muted-foreground mt-6">
