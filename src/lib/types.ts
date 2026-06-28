@@ -1,0 +1,97 @@
+export type UserRole = "seller" | "designer" | "manufacturer";
+
+export type OrderStatus =
+  | "pending"
+  | "assigned"
+  | "in_design"
+  | "design_review"
+  | "approved"
+  | "manufacturing"
+  | "completed"
+  | "rejected";
+
+export type FileType = "stl" | "3dm" | "jpg" | "png" | "reference";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  avatar?: string;
+  company?: string;
+  phone?: string;
+}
+
+export interface Customer {
+  name: string;
+  email: string;
+  phone: string;
+  address?: string;
+}
+
+export interface OrderFile {
+  id: string;
+  name: string;
+  type: FileType;
+  size: number;
+  uploadedAt: string;
+  uploadedBy: string;
+  url: string;
+  version?: number;
+}
+
+export interface Comment {
+  id: string;
+  author: string;
+  authorRole: UserRole;
+  content: string;
+  createdAt: string;
+}
+
+export interface ActivityItem {
+  id: string;
+  action: string;
+  user: string;
+  timestamp: string;
+  type: "order" | "file" | "status" | "comment";
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  title: string;
+  description: string;
+  status: OrderStatus;
+  customer: Customer;
+  seller: { id: string; name: string; email: string };
+  designer?: { id: string; name: string; email: string };
+  manufacturer?: { id: string; name: string; email: string };
+  requirements: string;
+  referenceImages: OrderFile[];
+  designFiles: OrderFile[];
+  previewImages: OrderFile[];
+  comments: Comment[];
+  activity: ActivityItem[];
+  createdAt: string;
+  updatedAt: string;
+  dueDate?: string;
+  progress: number;
+}
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: "new_order" | "accepted" | "file_upload" | "manufacturing_start" | "manufacturing_complete" | "general";
+  read: boolean;
+  createdAt: string;
+  orderId?: string;
+}
+
+export interface DashboardStats {
+  totalOrders: number;
+  pendingOrders: number;
+  inDesign: number;
+  manufacturing: number;
+  completedOrders: number;
+}
