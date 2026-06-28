@@ -11,7 +11,7 @@ interface TimelineStep {
 }
 
 const allSteps: TimelineStep[] = [
-  { label: "Order Created", status: "pending" },
+  { label: "Pending", status: "pending" },
   { label: "Assigned to Designer", status: "assigned" },
   { label: "In Design", status: "in_design" },
   { label: "Design Review", status: "design_review" },

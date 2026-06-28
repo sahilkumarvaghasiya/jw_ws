@@ -10,8 +10,6 @@ import {
   Package,
   PlusCircle,
   FolderOpen,
-  Bell,
-  BarChart3,
   Settings,
   User,
   ChevronLeft,
@@ -35,8 +33,6 @@ const navItems: NavItem[] = [
   { label: "New Order", href: "/orders/new", icon: PlusCircle, roles: ["seller"] },
   { label: "Orders", href: "/orders", icon: Package, roles: ["seller", "designer", "manufacturer"] },
   { label: "Files", href: "/files", icon: FolderOpen, roles: ["seller", "designer", "manufacturer"] },
-  { label: "Analytics", href: "/analytics", icon: BarChart3, roles: ["seller"] },
-  { label: "Notifications", href: "/notifications", icon: Bell, roles: ["seller", "designer", "manufacturer"] },
   { label: "Profile", href: "/profile", icon: User, roles: ["seller", "designer", "manufacturer"] },
   { label: "Settings", href: "/settings", icon: Settings, roles: ["seller", "designer", "manufacturer"] },
 ];

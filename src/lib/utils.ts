@@ -1,5 +1,21 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { OrderStatus, Order } from "@/lib/types";
+
+export const orderStatusDescriptions: Partial<Record<OrderStatus, string>> = {
+  pending: "Seller has added all information but the create order flow has not been finished.",
+};
+
+/** Returns create-order wizard step (1–4) for an incomplete pending order */
+export function getOrderDraftStep(order: Order): number {
+  if (order.draftStep) return order.draftStep;
+  if (!order.customer.name) return 1;
+  if (!order.title || !order.requirements) return 2;
+  if (!order.designer) {
+    return order.referenceImages.length === 0 ? 3 : 4;
+  }
+  return 4;
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

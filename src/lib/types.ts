@@ -12,6 +12,8 @@ export type OrderStatus =
 
 export type FileType = "stl" | "3dm" | "jpg" | "png" | "reference";
 
+export type OrderUrgency = "urgent" | "normal" | "low";
+
 export interface User {
   id: string;
   name: string;
@@ -76,6 +78,10 @@ export interface Order {
   updatedAt: string;
   dueDate?: string;
   progress: number;
+  /** Priority set by seller when creating the order */
+  urgency?: OrderUrgency;
+  /** Step (1–4) where seller left off when create order was not finished */
+  draftStep?: number;
 }
 
 export interface Notification {
@@ -94,4 +100,59 @@ export interface DashboardStats {
   inDesign: number;
   manufacturing: number;
   completedOrders: number;
+}
+
+export interface ManagedFile {
+  id: string;
+  name: string;
+  type: FileType;
+  size: number;
+  uploadedAt: string;
+  uploadedBy: string;
+  uploadedByRole: UserRole;
+  url: string;
+  orderId: string;
+  orderNumber: string;
+  productTitle: string;
+  designerId?: string;
+  designerName?: string;
+  sellerId?: string;
+  sellerName?: string;
+  manufacturerId?: string;
+  manufacturerName?: string;
+  version?: number;
+  designerNote?: string;
+}
+
+export interface FileRepairRequest {
+  id: string;
+  fileId: string;
+  orderId: string;
+  orderNumber: string;
+  fileName: string;
+  productTitle: string;
+  notes: string[];
+  status: "pending" | "resolved";
+  createdAt: string;
+  sellerName: string;
+}
+
+export interface ForwardedFile {
+  id: string;
+  name: string;
+  orderId: string;
+  orderNumber: string;
+  productTitle: string;
+  type: string;
+}
+
+export interface FileForwardPackage {
+  id: string;
+  fileIds: string[];
+  files: ForwardedFile[];
+  manufacturerId: string;
+  manufacturerName: string;
+  sellerName: string;
+  note?: string;
+  createdAt: string;
 }

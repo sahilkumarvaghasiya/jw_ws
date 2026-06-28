@@ -7,7 +7,6 @@ import { MonthlyOrderChart, RecentActivity } from "@/components/dashboard/charts
 import { OrdersTable } from "@/components/orders/orders-table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { OrderTimeline } from "@/components/orders/order-timeline";
 import { dashboardStats, orders, monthlyOrderData } from "@/lib/mock-data";
 import {
   Package,
@@ -42,18 +41,8 @@ export default function SellerDashboard() {
         <StatCard title="Completed" value={dashboardStats.completedOrders} change="+8% from last month" trend="up" icon={CheckCircle} delay={0.4} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="lg:col-span-2">
-          <MonthlyOrderChart data={monthlyOrderData} />
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Order Timeline</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <OrderTimeline currentStatus="in_design" />
-          </CardContent>
-        </Card>
+      <div className="mb-8">
+        <MonthlyOrderChart data={monthlyOrderData} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -66,7 +55,14 @@ export default function SellerDashboard() {
               </Link>
             </CardHeader>
             <CardContent>
-              <OrdersTable orders={orders.slice(0, 5)} showDesigner />
+              <OrdersTable
+                orders={orders}
+                limit={5}
+                showDesigner
+                showManufacturer
+                showTeamFilter
+                resumePendingOrders
+              />
             </CardContent>
           </Card>
         </div>

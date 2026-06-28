@@ -6,10 +6,8 @@ import { useRouter } from "next/navigation";
 import { useApp } from "@/context/app-context";
 import type { UserRole } from "@/lib/types";
 import { RoleBadge } from "@/components/ui/badge";
-import { notifications } from "@/lib/mock-data";
 import {
   Search,
-  Bell,
   Moon,
   Sun,
   ChevronDown,
@@ -27,10 +25,8 @@ const roleDashboard: Record<UserRole, string> = {
 export function TopNav() {
   const router = useRouter();
   const { user, role, setRole, darkMode, setDarkMode, sidebarCollapsed, setSidebarCollapsed } = useApp();
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const roles = [
     { value: "seller" as const, label: "Seller" },
@@ -107,51 +103,6 @@ export function TopNav() {
         >
           {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </button>
-
-        <div className="relative">
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 rounded-xl hover:bg-muted transition-colors"
-          >
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-gold text-[10px] text-white font-bold flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-          <AnimatePresence>
-            {showNotifications && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-border bg-card shadow-lg z-50"
-              >
-                <div className="px-4 py-3 border-b border-border flex justify-between items-center">
-                  <h3 className="font-medium text-sm">Notifications</h3>
-                  <Link href="/notifications" className="text-xs text-gold hover:underline" onClick={() => setShowNotifications(false)}>
-                    View all
-                  </Link>
-                </div>
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.slice(0, 4).map((n) => (
-                    <div
-                      key={n.id}
-                      className={cn(
-                        "px-4 py-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer",
-                        !n.read && "bg-gold/5"
-                      )}
-                    >
-                      <p className="text-sm font-medium">{n.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
 
         <div className="relative">
           <button

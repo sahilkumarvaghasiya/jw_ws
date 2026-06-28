@@ -3,6 +3,8 @@ import type {
   Notification,
   DashboardStats,
   User,
+  ManagedFile,
+  UserRole,
 } from "./types";
 
 export const currentUser: User = {
@@ -29,20 +31,6 @@ export const monthlyOrderData = [
   { month: "Apr", orders: 35, completed: 32 },
   { month: "May", orders: 42, completed: 38 },
   { month: "Jun", orders: 45, completed: 40 },
-];
-
-export const orderProgressData = [
-  { name: "Pending", value: 18, color: "#9CA3AF" },
-  { name: "In Design", value: 34, color: "#D4AF37" },
-  { name: "Manufacturing", value: 22, color: "#F59E0B" },
-  { name: "Completed", value: 174, color: "#10B981" },
-];
-
-export const teamPerformance = [
-  { name: "Sarah Chen", role: "Designer", completed: 42, rating: 4.9 },
-  { name: "Marcus Webb", role: "Designer", completed: 38, rating: 4.8 },
-  { name: "Elena Rossi", role: "Manufacturer", completed: 56, rating: 4.9 },
-  { name: "James Park", role: "Manufacturer", completed: 48, rating: 4.7 },
 ];
 
 export const notifications: Notification[] = [
@@ -196,6 +184,7 @@ export const orders: Order[] = [
     updatedAt: "2024-06-26T09:00:00Z",
     dueDate: "2024-07-15",
     progress: 65,
+    urgency: "urgent",
   },
   {
     id: "o2",
@@ -251,13 +240,25 @@ export const orders: Order[] = [
     requirements: "18K white gold, 1.5ct emerald cut diamonds each, lever-back closures.",
     referenceImages: sampleReferenceImages,
     designFiles: sampleDesignFiles,
-    previewImages: samplePreviews,
+    previewImages: [
+      ...samplePreviews,
+      {
+        id: "f7",
+        name: "earrings-casting-setup.jpg",
+        type: "jpg" as const,
+        size: 2100000,
+        uploadedAt: "2024-06-27T10:00:00Z",
+        uploadedBy: "Elena Rossi",
+        url: "https://images.unsplash.com/photo-1617032215565-1e6a0e0b0e3f?w=600&h=600&fit=crop",
+      },
+    ],
     comments: [],
     activity: [],
     createdAt: "2024-06-10T09:00:00Z",
     updatedAt: "2024-06-27T11:00:00Z",
     dueDate: "2024-07-05",
     progress: 80,
+    urgency: "urgent",
   },
   {
     id: "o4",
@@ -305,29 +306,70 @@ export const orders: Order[] = [
     updatedAt: "2024-06-27T15:00:00Z",
     dueDate: "2024-08-01",
     progress: 5,
+    draftStep: 3,
+  },
+  {
+    id: "o6",
+    orderNumber: "JW-2024-084",
+    title: "Gold Hoop Earrings",
+    description: "Classic 18K gold hoop earrings, 25mm diameter, hinged closure.",
+    status: "assigned",
+    customer: {
+      name: "Sophie Martinez",
+      email: "s.martinez@email.com",
+      phone: "+1 (555) 789-0123",
+    },
+    seller: { id: "u1", name: "Eleanor Whitmore", email: "eleanor@luxejewels.com" },
+    designer: { id: "u2", name: "Sarah Chen", email: "sarah@designstudio.com" },
+    requirements: "18K yellow gold, 25mm hoops, polished finish, secure hinge.",
+    referenceImages: [
+      {
+        id: "f8",
+        name: "hoop-reference.jpg",
+        type: "reference",
+        size: 1800000,
+        uploadedAt: "2024-06-28T09:00:00Z",
+        uploadedBy: "Eleanor Whitmore",
+        url: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=400&fit=crop",
+      },
+    ],
+    designFiles: [],
+    previewImages: [],
+    comments: [],
+    activity: [
+      { id: "a7", action: "Order created", user: "Eleanor Whitmore", timestamp: "2024-06-28T09:00:00Z", type: "order" },
+      { id: "a8", action: "Assigned to Sarah Chen", user: "Eleanor Whitmore", timestamp: "2024-06-28T10:00:00Z", type: "status" },
+    ],
+    createdAt: "2024-06-28T09:00:00Z",
+    updatedAt: "2024-06-28T10:00:00Z",
+    dueDate: "2024-07-25",
+    progress: 10,
+    urgency: "urgent",
   },
 ];
 
-export const allFiles = orders.flatMap((order) => [
-  ...order.referenceImages.map((f) => ({
-    ...f,
-    id: `${order.id}-${f.id}`,
-    orderNumber: order.orderNumber,
+function resolveUploaderRole(order: Order, uploadedBy: string): UserRole {
+  if (order.designer?.name === uploadedBy) return "designer";
+  if (order.manufacturer?.name === uploadedBy) return "manufacturer";
+  return "seller";
+}
+
+export const allFiles: ManagedFile[] = orders.flatMap((order) =>
+  [...order.referenceImages, ...order.designFiles, ...order.previewImages].map((file) => ({
+    ...file,
+    id: `${order.id}-${file.id}`,
     orderId: order.id,
-  })),
-  ...order.designFiles.map((f) => ({
-    ...f,
-    id: `${order.id}-${f.id}`,
     orderNumber: order.orderNumber,
-    orderId: order.id,
-  })),
-  ...order.previewImages.map((f) => ({
-    ...f,
-    id: `${order.id}-${f.id}`,
-    orderNumber: order.orderNumber,
-    orderId: order.id,
-  })),
-]);
+    productTitle: order.title,
+    designerId: order.designer?.id,
+    designerName: order.designer?.name,
+    sellerId: order.seller.id,
+    sellerName: order.seller.name,
+    manufacturerId: order.manufacturer?.id,
+    manufacturerName: order.manufacturer?.name,
+    uploadedByRole: resolveUploaderRole(order, file.uploadedBy),
+  }))
+);
 
 export const designers = [
   { id: "u2", name: "Sarah Chen", email: "sarah@designstudio.com", activeOrders: 8 },

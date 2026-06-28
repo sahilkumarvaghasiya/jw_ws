@@ -1,5 +1,7 @@
-import { cn } from "@/lib/utils";
+import { cn, orderStatusDescriptions } from "@/lib/utils";
 import type { OrderStatus } from "@/lib/types";
+import type { DesignerWorkflowStatus } from "@/context/order-workflow-context";
+import { workflowStatusLabels } from "@/context/order-workflow-context";
 
 const statusConfig: Record<OrderStatus, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-muted text-muted-foreground" },
@@ -19,8 +21,10 @@ interface BadgeProps {
 
 export function StatusBadge({ status, className }: BadgeProps) {
   const config = statusConfig[status];
+  const description = orderStatusDescriptions[status];
   return (
     <span
+      title={description}
       className={cn(
         "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase",
         config.className,
@@ -28,6 +32,33 @@ export function StatusBadge({ status, className }: BadgeProps) {
       )}
     >
       {config.label}
+    </span>
+  );
+}
+
+const designerStatusConfig: Record<DesignerWorkflowStatus, string> = {
+  pending: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  in_design: "bg-gold/15 text-gold-dark dark:text-gold",
+  completed: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  repair: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+};
+
+export function DesignerStatusBadge({
+  status,
+  className,
+}: {
+  status: DesignerWorkflowStatus;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium tracking-wide uppercase",
+        designerStatusConfig[status],
+        className
+      )}
+    >
+      {workflowStatusLabels[status]}
     </span>
   );
 }
